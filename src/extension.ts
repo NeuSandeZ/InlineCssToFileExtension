@@ -33,11 +33,7 @@ export function activate(context: ExtensionContext) {
 
 export function deactivate() {}
 
-async function moveToNewFile(
-  document: TextDocument,
-  inlineCss: string,
-  pair: number[]
-) {
+async function moveToNewFile(document: TextDocument, pair: number[]) {
   const fileName =
     (await window.showInputBox({
       prompt: "Enter file name",
@@ -48,22 +44,18 @@ async function moveToNewFile(
   });
 
   if (!className || !fileName) {
-    await window.showErrorMessage("Name cannot be empty");
+    window.showErrorMessage("Name cannot be empty");
     return;
   }
 
-  applyEditAndWriteCss(document, inlineCss, pair, fileName, className);
+  applyEditAndWriteCss(document, pair, fileName, className);
 }
 
-async function moveToExistingFile(
-  document: TextDocument,
-  inlineCss: string,
-  pair: number[]
-) {
+async function moveToExistingFile(document: TextDocument, pair: number[]) {
   const cssFiles = await workspace.findFiles("**/*.css");
   if (cssFiles.length === 0) {
     window.showErrorMessage("No .css file was found!");
-    moveToNewFile(document, inlineCss, pair);
+    moveToNewFile(document, pair);
     return;
   }
 
@@ -82,12 +74,11 @@ async function moveToExistingFile(
     return;
   }
 
-  applyEditAndWriteCss(document, inlineCss, pair, chosenFile, className);
+  applyEditAndWriteCss(document, pair, chosenFile, className);
 }
 
-function applyEditAndWriteCss(
+async function applyEditAndWriteCss(
   document: TextDocument,
-  inlineCss: string,
   pair: number[],
   fileName: string,
   className: string
@@ -97,28 +88,37 @@ function applyEditAndWriteCss(
     fileName
   );
 
-  window.activeTextEditor!.edit((editBuilder) => {
+  await window.activeTextEditor!.edit((editBuilder) => {
+    const extractedStyleContent = document
+      .getText()
+      .substring(pair[0] + 7, pair[1] - 1);
     if (pair[2]) {
-      const positionToInsert = document.positionAt(pair[2] - 1);
-      editBuilder.delete(
-        new Range(
-          document.positionAt(pair[2] + 1),
-          document.positionAt(pair[1])
-        )
+      const minInx = Math.min(...pair);
+      const maxInx = Math.max(...pair);
+      const extractedClassContent = document
+        .getText()
+        .substring(pair[2] + 7, pair[3] - 1);
+
+      editBuilder.replace(
+        new Range(document.positionAt(minInx), document.positionAt(maxInx)),
+        `class="${extractedClassContent} ${className}"`
       );
-      editBuilder.insert(positionToInsert, " " + className);
     } else {
       editBuilder.replace(
         new Range(document.positionAt(pair[0]), document.positionAt(pair[1])),
         `class="${className}"`
       );
     }
+    if (!fs.existsSync(cssFilePath)) {
+      fs.writeFileSync(
+        cssFilePath,
+        `.${className} { ${extractedStyleContent} }`
+      );
+    } else {
+      fs.appendFileSync(
+        cssFilePath,
+        `\n\n.${className} { ${extractedStyleContent} }`
+      );
+    }
   });
-
-  const extractedStyle = inlineCss.split('"')[1];
-  if (!fs.existsSync(cssFilePath)) {
-    fs.writeFileSync(cssFilePath, `.${className} { ${extractedStyle} }`);
-  } else {
-    fs.appendFileSync(cssFilePath, `\n\n.${className} { ${extractedStyle} }`);
-  }
 }
