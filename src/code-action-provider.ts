@@ -45,7 +45,6 @@ async function GetCommands(
     const endOffset = pair[1];
 
     if (cursorOffset >= startOffset && cursorOffset <= endOffset) {
-      const styleText = document.getText().substring(startOffset, endOffset);
       const newFile = new CodeAction(
         "Move to a new file",
         CodeActionKind.QuickFix
@@ -53,7 +52,7 @@ async function GetCommands(
       newFile.command = {
         title: "Move to new file",
         command: "extension.extractInlineCssToNewFile",
-        arguments: [document, styleText, pair],
+        arguments: [document, pair],
       };
 
       const toExistingFile = new CodeAction(
@@ -64,7 +63,7 @@ async function GetCommands(
       toExistingFile.command = {
         title: "Move to file",
         command: "extension.extractInlineCssToFile",
-        arguments: [document, styleText, pair],
+        arguments: [document, pair],
       };
       return [newFile, toExistingFile];
     }
