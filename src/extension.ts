@@ -52,37 +52,7 @@ async function moveToNewFile(
     return;
   }
 
-  //TODO give it a thought about opening file
-  // const newUri = vscode.Uri.file(cssFilePath);
-  // vscode.workspace.openTextDocument(newUri).then((doc) => {
-  //   vscode.window.showTextDocument(doc);
-  // });
-
-  const cssFilePath = path.join(
-    workspace.workspaceFolders![0].uri.fsPath,
-    fileName
-  );
-
-  window.activeTextEditor?.edit((editBuilder) => {
-    if (pair[3]) {
-      const positionToInsert = document.positionAt(pair[3] - 1);
-      editBuilder.delete(
-        new Range(
-          document.positionAt(pair[3] + 1),
-          document.positionAt(pair[1])
-        )
-      );
-      editBuilder.insert(positionToInsert, " " + className);
-    } else {
-      editBuilder.replace(
-        new Range(document.positionAt(pair[0]), document.positionAt(pair[1])),
-        `class="${className}"`
-      );
-    }
-  });
-
-  const extractedStyle = inlineCss.split('"')[1];
-  fs.writeFileSync(cssFilePath, `.${className} { ${extractedStyle} }`);
+  applyEditAndWriteCss(document, inlineCss, pair, fileName, className);
 }
 
 async function moveToExistingFile(
@@ -93,7 +63,7 @@ async function moveToExistingFile(
   const cssFiles = await workspace.findFiles("**/*.css");
   if (cssFiles.length === 0) {
     window.showErrorMessage("No .css file was found!");
-    //TODO redirect to creating?
+    moveToNewFile(document, inlineCss, pair);
     return;
   }
 
@@ -112,18 +82,43 @@ async function moveToExistingFile(
     return;
   }
 
+  applyEditAndWriteCss(document, inlineCss, pair, chosenFile, className);
+}
+
+function applyEditAndWriteCss(
+  document: TextDocument,
+  inlineCss: string,
+  pair: number[],
+  fileName: string,
+  className: string
+) {
   const cssFilePath = path.join(
     workspace.workspaceFolders![0].uri.fsPath,
-    chosenFile
+    fileName
   );
 
-  window.activeTextEditor?.edit((editBuilder) => {
-    editBuilder.replace(
-      new Range(document.positionAt(pair[0]), document.positionAt(pair[1])),
-      `class="${className}"`
-    );
+  window.activeTextEditor!.edit((editBuilder) => {
+    if (pair[2]) {
+      const positionToInsert = document.positionAt(pair[2] - 1);
+      editBuilder.delete(
+        new Range(
+          document.positionAt(pair[2] + 1),
+          document.positionAt(pair[1])
+        )
+      );
+      editBuilder.insert(positionToInsert, " " + className);
+    } else {
+      editBuilder.replace(
+        new Range(document.positionAt(pair[0]), document.positionAt(pair[1])),
+        `class="${className}"`
+      );
+    }
   });
 
   const extractedStyle = inlineCss.split('"')[1];
-  fs.appendFileSync(cssFilePath, `\n\n.${className} { ${extractedStyle} }`);
+  if (!fs.existsSync(cssFilePath)) {
+    fs.writeFileSync(cssFilePath, `.${className} { ${extractedStyle} }`);
+  } else {
+    fs.appendFileSync(cssFilePath, `\n\n.${className} { ${extractedStyle} }`);
+  }
 }
