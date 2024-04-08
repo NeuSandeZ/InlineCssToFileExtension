@@ -7,35 +7,29 @@ export async function ParseText(document: string): Promise<number[][]> {
   let indexOfOpenTag: number;
   let indexOfCloseTag: number;
 
-  //TODO after executing command, code doesn't go into parser
   const parser = new Parser({
-    onopentag(name, attribs) {
+    onopentag(name) {
       indexOfOpenTag = parser.startIndex;
     },
-    onattribute(name) {
+    onattribute(name, value) {
       if (name === "class") {
         indexesOfClass.push(parser.startIndex, parser.endIndex);
       }
-      if (name === "style") {
+      if (name === "style" && value.trim() !== "") {
         indexesOfStyle.push(parser.startIndex, parser.endIndex);
       }
     },
     onclosetag(name) {
       indexOfCloseTag = parser.startIndex;
 
-      let minValue = Math.min(...indexesOfClass, ...indexesOfStyle);
-      let maxValue = Math.max(...indexesOfClass, ...indexesOfStyle);
-
-      if (
-        indexOfOpenTag <= minValue &&
-        indexOfCloseTag >= maxValue &&
-        indexesOfStyle.length > 0
-      ) {
-        indexes.push([...indexesOfStyle, ...indexesOfClass]);
-
-        indexesOfStyle = [];
-        indexesOfClass = [];
+      if (indexesOfClass.length > 0 && indexesOfStyle.length > 0) {
+        indexes.push([indexesOfStyle[0], indexesOfStyle[1], indexesOfClass[1]]);
+      } else if (indexesOfStyle.length > 0) {
+        indexes.push([...indexesOfStyle]);
       }
+
+      indexesOfStyle = [];
+      indexesOfClass = [];
     },
   });
 
