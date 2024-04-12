@@ -1,13 +1,34 @@
 {
-  "name": "inlinecsstofile",
+  "name": "inline-css-to-file-extractor",
   "displayName": "InlineCssToFile",
-  "description": "Move inline styles to file.",
+  "description": "Move inline styles to a file.",
   "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.88.0"
+  "pricing": "Free",
+  "license": "MIT",
+  "publisher": "NeuSandeZ",
+  "author": {
+    "name": "Wojciech Massalski",
+    "url": "https://github.com/NeuSandeZ"
+  },
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/NeuSandeZ/InlineCssToFileExtension"
   },
   "categories": [
-    "Other"
+    "Programming Languages"
+  ],
+  "keywords": [
+    "css",
+    "html",
+    "extractor",
+    "inline style",
+    "inline css",
+    "style to file",
+    "javascript",
+    "typescript",
+    "angular",
+    "vue",
+    "react"
   ],
   "activationEvents": [
     "onLanguage:html"
@@ -32,6 +53,9 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
+  },
+  "engines": {
+    "vscode": "^1.88.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
