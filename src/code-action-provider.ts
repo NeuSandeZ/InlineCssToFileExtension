@@ -26,13 +26,7 @@ export class ContextualActionProvider implements CodeActionProvider {
     }
 
     const cursorOffset = document.offsetAt(range.start);
-    const commands = await GetCommands(
-      parseResult.indexes,
-      document,
-      cursorOffset,
-      parseResult.lastLinkIndex,
-      parseResult.headIndex
-    );
+    const commands = await GetCommands(parseResult, cursorOffset, document);
     if (commands) {
       return commands;
     }
@@ -42,13 +36,11 @@ export class ContextualActionProvider implements CodeActionProvider {
 }
 
 async function GetCommands(
-  styleIndexes: number[][],
-  document: TextDocument,
+  parseResult: ParseResult,
   cursorOffset: number,
-  linkIndex?: number | null,
-  headIndex?: number | null
+  document: TextDocument
 ) {
-  for (let pair of styleIndexes) {
+  for (let pair of parseResult.indexes) {
     const startOffset = pair[0];
     const endOffset = pair[1];
 
@@ -60,7 +52,12 @@ async function GetCommands(
       newFile.command = {
         title: "Move to new file",
         command: "extension.extractInlineCssToNewFile",
-        arguments: [document, pair, linkIndex, headIndex],
+        arguments: [
+          document,
+          pair,
+          parseResult.lastLinkIndex,
+          parseResult.headIndex,
+        ],
       };
 
       const toExistingFile = new CodeAction(
@@ -71,7 +68,12 @@ async function GetCommands(
       toExistingFile.command = {
         title: "Move to file",
         command: "extension.extractInlineCssToFile",
-        arguments: [document, pair, linkIndex, headIndex],
+        arguments: [
+          document,
+          pair,
+          parseResult.lastLinkIndex,
+          parseResult.headIndex,
+        ],
       };
       return [newFile, toExistingFile];
     }
