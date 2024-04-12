@@ -30,7 +30,8 @@ export class ContextualActionProvider implements CodeActionProvider {
       parseResult.indexes,
       document,
       cursorOffset,
-      parseResult.lastLinkIndex
+      parseResult.lastLinkIndex,
+      parseResult.headIndex
     );
     if (commands) {
       return commands;
@@ -44,7 +45,8 @@ async function GetCommands(
   styleIndexes: number[][],
   document: TextDocument,
   cursorOffset: number,
-  linkIndex?: number | null
+  linkIndex?: number | null,
+  headIndex?: number | null
 ) {
   for (let pair of styleIndexes) {
     const startOffset = pair[0];
@@ -58,7 +60,7 @@ async function GetCommands(
       newFile.command = {
         title: "Move to new file",
         command: "extension.extractInlineCssToNewFile",
-        arguments: [document, pair, linkIndex],
+        arguments: [document, pair, linkIndex, headIndex],
       };
 
       const toExistingFile = new CodeAction(
@@ -69,7 +71,7 @@ async function GetCommands(
       toExistingFile.command = {
         title: "Move to file",
         command: "extension.extractInlineCssToFile",
-        arguments: [document, pair, linkIndex],
+        arguments: [document, pair, linkIndex, headIndex],
       };
       return [newFile, toExistingFile];
     }
