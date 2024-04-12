@@ -36,7 +36,8 @@ export function deactivate() {}
 async function moveToNewFile(
   document: TextDocument,
   pair: number[],
-  linkIndex: number
+  linkIndex: number,
+  headIndex: number
 ) {
   const fileName =
     (await window.showInputBox({
@@ -52,18 +53,26 @@ async function moveToNewFile(
     return;
   }
 
-  applyEditAndWriteCss(document, pair, fileName, className, linkIndex);
+  applyEditAndWriteCss(
+    document,
+    pair,
+    fileName,
+    className,
+    linkIndex,
+    headIndex
+  );
 }
 
 async function moveToExistingFile(
   document: TextDocument,
   pair: number[],
-  linkIndex: number
+  linkIndex: number,
+  headIndex: number
 ) {
   const cssFiles = await workspace.findFiles("**/*.css");
   if (cssFiles.length === 0) {
     window.showErrorMessage("No .css file was found!");
-    moveToNewFile(document, pair, linkIndex);
+    moveToNewFile(document, pair, linkIndex, headIndex);
     return;
   }
 
@@ -82,7 +91,14 @@ async function moveToExistingFile(
     return;
   }
 
-  applyEditAndWriteCss(document, pair, chosenFile, className);
+  applyEditAndWriteCss(
+    document,
+    pair,
+    chosenFile,
+    className,
+    linkIndex,
+    headIndex
+  );
 }
 
 async function applyEditAndWriteCss(
@@ -90,7 +106,8 @@ async function applyEditAndWriteCss(
   pair: number[],
   fileName: string,
   className: string,
-  linkIndex?: number
+  linkIndex?: number,
+  headIndex?: number
 ) {
   const cssFilePath = path.join(
     workspace.workspaceFolders![0].uri.fsPath,
@@ -98,9 +115,11 @@ async function applyEditAndWriteCss(
   );
 
   await window.activeTextEditor!.edit((editBuilder) => {
-    const extractedStyleContent = document
-      .getText()
-      .substring(pair[0] + 7, pair[1] - 1);
+    const documentText = document.getText();
+    const extractedStyleContent = documentText.substring(
+      pair[0] + 7,
+      pair[1] - 1
+    );
     if (pair[2]) {
       const minInx = Math.min(...pair);
       const maxInx = Math.max(...pair);
@@ -119,11 +138,6 @@ async function applyEditAndWriteCss(
       );
     }
     if (!fs.existsSync(cssFilePath)) {
-      let postionToInsertStyle = document.positionAt(linkIndex! + 1);
-      editBuilder.insert(
-        postionToInsertStyle,
-        `\n\t\t<link rel="stylesheet" href="${path.basename(cssFilePath)}">`
-      );
       fs.writeFileSync(
         cssFilePath,
         `.${className} { ${extractedStyleContent} }`
@@ -132,6 +146,26 @@ async function applyEditAndWriteCss(
       fs.appendFileSync(
         cssFilePath,
         `\n\n.${className} { ${extractedStyleContent} }`
+      );
+    }
+    if (linkIndex && documentText.includes(fileName)) {
+      return;
+    } else if (linkIndex && !documentText.includes(fileName)) {
+      let postionToInsertImport = document.positionAt(linkIndex! + 1);
+      editBuilder.insert(
+        postionToInsertImport,
+        `\n\t\t<link rel="stylesheet" href="${path.basename(cssFilePath)}">`
+      );
+    } else if (headIndex && !linkIndex && !documentText.includes(fileName)) {
+      let userTabsSize = workspace
+        .getConfiguration("editor")
+        .get<number>("tabSize");
+      let postionToInsertImport = document.positionAt(
+        headIndex! - (userTabsSize ??= 1)
+      );
+      editBuilder.insert(
+        postionToInsertImport,
+        `\n\t\t<link rel="stylesheet" href="${path.basename(cssFilePath)}">`
       );
     }
   });
