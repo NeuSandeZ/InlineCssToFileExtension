@@ -72,7 +72,12 @@ async function moveToExistingFile(
   const cssFiles = await workspace.findFiles("**/*.css");
   if (cssFiles.length === 0) {
     window.showErrorMessage("No .css file was found!");
-    moveToNewFile(document, pair, linkIndex, headIndex);
+    let choice = await window.showQuickPick(["Yes", "No"], {
+      placeHolder: "Want to create a CSS file?",
+    });
+    choice === "Yes"
+      ? moveToNewFile(document, pair, linkIndex, headIndex)
+      : null;
     return;
   }
 
@@ -109,12 +114,16 @@ async function applyEditAndWriteCss(
   linkIndex?: number,
   headIndex?: number
 ) {
+  let editor = window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
   const cssFilePath = path.join(
-    workspace.workspaceFolders![0].uri.fsPath,
+    path.dirname(editor.document.uri.fsPath),
     fileName
   );
 
-  await window.activeTextEditor!.edit((editBuilder) => {
+  await editor.edit((editBuilder) => {
     const documentText = document.getText();
     const extractedStyleContent = documentText.substring(
       pair[0] + 7,
