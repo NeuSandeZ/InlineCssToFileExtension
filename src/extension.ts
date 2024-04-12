@@ -33,7 +33,11 @@ export function activate(context: ExtensionContext) {
 
 export function deactivate() {}
 
-async function moveToNewFile(document: TextDocument, pair: number[]) {
+async function moveToNewFile(
+  document: TextDocument,
+  pair: number[],
+  linkIndex: number
+) {
   const fileName =
     (await window.showInputBox({
       prompt: "Enter file name",
@@ -48,14 +52,18 @@ async function moveToNewFile(document: TextDocument, pair: number[]) {
     return;
   }
 
-  applyEditAndWriteCss(document, pair, fileName, className);
+  applyEditAndWriteCss(document, pair, fileName, className, linkIndex);
 }
 
-async function moveToExistingFile(document: TextDocument, pair: number[]) {
+async function moveToExistingFile(
+  document: TextDocument,
+  pair: number[],
+  linkIndex: number
+) {
   const cssFiles = await workspace.findFiles("**/*.css");
   if (cssFiles.length === 0) {
     window.showErrorMessage("No .css file was found!");
-    moveToNewFile(document, pair);
+    moveToNewFile(document, pair, linkIndex);
     return;
   }
 
@@ -81,7 +89,8 @@ async function applyEditAndWriteCss(
   document: TextDocument,
   pair: number[],
   fileName: string,
-  className: string
+  className: string,
+  linkIndex?: number
 ) {
   const cssFilePath = path.join(
     workspace.workspaceFolders![0].uri.fsPath,
@@ -110,6 +119,11 @@ async function applyEditAndWriteCss(
       );
     }
     if (!fs.existsSync(cssFilePath)) {
+      let postionToInsertStyle = document.positionAt(linkIndex! + 1);
+      editBuilder.insert(
+        postionToInsertStyle,
+        `\n\t\t<link rel="stylesheet" href="${path.basename(cssFilePath)}">`
+      );
       fs.writeFileSync(
         cssFilePath,
         `.${className} { ${extractedStyleContent} }`
