@@ -38,20 +38,25 @@ async function moveToNewFile(
   pair: number[],
   linkIndex: number | null
 ) {
-  const fileName =
-    (await window.showInputBox({
-      prompt: "Enter file name",
-    })) + ".css";
+  let fileName = await window.showInputBox({
+    prompt: "Enter file name",
+  });
+
+  if (!fileName) {
+    await window.showInformationMessage("File name cannot be empty!");
+    return;
+  }
 
   const className = await window.showInputBox({
     prompt: "Enter class name",
   });
 
-  if (!className || !fileName) {
-    window.showErrorMessage("Name cannot be empty");
+  if (!className) {
+    await window.showInformationMessage("Class name cannot be empty!");
     return;
   }
 
+  fileName += ".css";
   await applyEditAndWriteCss(document, pair, fileName, className, linkIndex);
 }
 
@@ -62,7 +67,7 @@ async function moveToExistingFile(
 ) {
   const cssFiles = await workspace.findFiles("**/*.css");
   if (cssFiles.length === 0) {
-    window.showErrorMessage("No .css file was found!");
+    await window.showErrorMessage("No .css file was found!");
     let choice = await window.showQuickPick(["Yes", "No"], {
       placeHolder: "Want to create a CSS file?",
     });
@@ -128,7 +133,7 @@ async function applyEditAndWriteCss(
       );
     }
     //TODO add detection of .css files linked to a componenet's html
-    //and extract them automatically there after triggering command?
+    // and extract them automatically there after triggering command??
     if (!fs.existsSync(cssFilePath)) {
       fs.writeFileSync(
         cssFilePath,
@@ -151,6 +156,7 @@ async function applyEditAndWriteCss(
       );
     } else if (!linkIndex && !documentText.includes(fileName)) {
       const titleIndex = documentText.indexOf("</title>");
+      //TODO temporary fix so react and angular don't get imports
       if (titleIndex === -1) {
         return;
       }
