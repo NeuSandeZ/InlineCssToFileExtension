@@ -52,7 +52,7 @@ async function moveToNewFile(
     return;
   }
 
-  applyEditAndWriteCss(document, pair, fileName, className, linkIndex);
+  await applyEditAndWriteCss(document, pair, fileName, className, linkIndex);
 }
 
 async function moveToExistingFile(
@@ -85,7 +85,7 @@ async function moveToExistingFile(
     return;
   }
 
-  applyEditAndWriteCss(document, pair, chosenFile, className, linkIndex);
+  await applyEditAndWriteCss(document, pair, chosenFile, className, linkIndex);
 }
 
 async function applyEditAndWriteCss(
@@ -127,6 +127,8 @@ async function applyEditAndWriteCss(
         `class="${className}"`
       );
     }
+    //TODO add detection of .css files linked to a componenet's html
+    //and extract them automatically there after triggering command?
     if (!fs.existsSync(cssFilePath)) {
       fs.writeFileSync(
         cssFilePath,
@@ -138,6 +140,7 @@ async function applyEditAndWriteCss(
         `\n\n.${className} { ${extractedStyleContent} }`
       );
     }
+    //TODO handle imports for angular and react?
     if (linkIndex && documentText.includes(fileName)) {
       return;
     } else if (linkIndex && !documentText.includes(fileName)) {
@@ -148,6 +151,9 @@ async function applyEditAndWriteCss(
       );
     } else if (!linkIndex && !documentText.includes(fileName)) {
       const titleIndex = documentText.indexOf("</title>");
+      if (titleIndex === -1) {
+        return;
+      }
       const postionToInsertImport = document.positionAt(
         titleIndex + "</title>".length
       );
