@@ -2,16 +2,14 @@ import { Parser } from "htmlparser2";
 
 export interface ParseResult {
   indexes: number[][];
-  lastLinkIndex?: number | null;
-  headIndex?: number | null;
+  lastLinkIndex: number | null;
 }
 
 export async function ParseText(document: string): Promise<ParseResult> {
-  let indexes: number[][] = [];
+  const indexes: number[][] = [];
   let indexesOfClass: number[] = [];
   let indexesOfStyle: number[] = [];
   let lastLinkIndex: number | null = null;
-  let headIndex: number | null = null;
 
   const parser = new Parser({
     onattribute(name, value) {
@@ -25,9 +23,6 @@ export async function ParseText(document: string): Promise<ParseResult> {
     onclosetag(name, isImplied) {
       if (name === "link" && isImplied) {
         lastLinkIndex = parser.endIndex;
-      }
-      if (name === "head") {
-        headIndex = parser.startIndex;
       }
       if (indexesOfClass.length > 0 && indexesOfStyle.length > 0) {
         indexes.push([...indexesOfStyle, ...indexesOfClass]);
@@ -43,5 +38,5 @@ export async function ParseText(document: string): Promise<ParseResult> {
   parser.write(document);
   parser.end();
 
-  return { indexes, lastLinkIndex, headIndex };
+  return { indexes, lastLinkIndex };
 }

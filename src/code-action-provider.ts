@@ -12,7 +12,7 @@ export class ContextualActionProvider implements CodeActionProvider {
   public async provideCodeActions(
     document: TextDocument,
     range: Range
-  ): Promise<CodeAction[] | null | undefined> {
+  ): Promise<CodeAction[] | undefined> {
     const editor = window.activeTextEditor;
     if (!editor) {
       return;
@@ -52,12 +52,7 @@ async function GetCommands(
       newFile.command = {
         title: "Move to new file",
         command: "extension.extractInlineCssToNewFile",
-        arguments: [
-          document,
-          pair,
-          parseResult.lastLinkIndex,
-          parseResult.headIndex,
-        ],
+        arguments: [document, pair, parseResult.lastLinkIndex],
       };
 
       const toExistingFile = new CodeAction(
@@ -68,14 +63,9 @@ async function GetCommands(
       toExistingFile.command = {
         title: "Move to file",
         command: "extension.extractInlineCssToFile",
-        arguments: [
-          document,
-          pair,
-          parseResult.lastLinkIndex,
-          parseResult.headIndex,
-        ],
+        arguments: [document, pair, parseResult.lastLinkIndex],
       };
-      return [newFile, toExistingFile];
+      return [toExistingFile, newFile];
     }
   }
 }

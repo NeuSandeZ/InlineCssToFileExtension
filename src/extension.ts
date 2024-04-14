@@ -36,8 +36,7 @@ export function deactivate() {}
 async function moveToNewFile(
   document: TextDocument,
   pair: number[],
-  linkIndex: number,
-  headIndex: number
+  linkIndex: number | null
 ) {
   const fileName =
     (await window.showInputBox({
@@ -53,21 +52,13 @@ async function moveToNewFile(
     return;
   }
 
-  applyEditAndWriteCss(
-    document,
-    pair,
-    fileName,
-    className,
-    linkIndex,
-    headIndex
-  );
+  applyEditAndWriteCss(document, pair, fileName, className, linkIndex);
 }
 
 async function moveToExistingFile(
   document: TextDocument,
   pair: number[],
-  linkIndex: number,
-  headIndex: number
+  linkIndex: number | null
 ) {
   const cssFiles = await workspace.findFiles("**/*.css");
   if (cssFiles.length === 0) {
@@ -75,9 +66,7 @@ async function moveToExistingFile(
     let choice = await window.showQuickPick(["Yes", "No"], {
       placeHolder: "Want to create a CSS file?",
     });
-    choice === "Yes"
-      ? moveToNewFile(document, pair, linkIndex, headIndex)
-      : null;
+    choice === "Yes" ? moveToNewFile(document, pair, linkIndex) : null;
     return;
   }
 
@@ -96,14 +85,7 @@ async function moveToExistingFile(
     return;
   }
 
-  applyEditAndWriteCss(
-    document,
-    pair,
-    chosenFile,
-    className,
-    linkIndex,
-    headIndex
-  );
+  applyEditAndWriteCss(document, pair, chosenFile, className, linkIndex);
 }
 
 async function applyEditAndWriteCss(
@@ -111,8 +93,7 @@ async function applyEditAndWriteCss(
   pair: number[],
   fileName: string,
   className: string,
-  linkIndex?: number,
-  headIndex?: number
+  linkIndex: number | null
 ) {
   let editor = window.activeTextEditor;
   if (!editor) {
@@ -165,12 +146,10 @@ async function applyEditAndWriteCss(
         postionToInsertImport,
         `\n\t\t<link rel="stylesheet" href="${path.basename(cssFilePath)}">`
       );
-    } else if (headIndex && !linkIndex && !documentText.includes(fileName)) {
-      let userTabsSize = workspace
-        .getConfiguration("editor")
-        .get<number>("tabSize");
-      let postionToInsertImport = document.positionAt(
-        headIndex! - (userTabsSize ??= 1)
+    } else if (!linkIndex && !documentText.includes(fileName)) {
+      const titleIndex = documentText.indexOf("</title>");
+      const postionToInsertImport = document.positionAt(
+        titleIndex + "</title>".length
       );
       editBuilder.insert(
         postionToInsertImport,
