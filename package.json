@@ -2,7 +2,7 @@
   "name": "inline-css-to-file-extractor",
   "displayName": "InlineCssToFile",
   "description": "Move inline styles to a file.",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "pricing": "Free",
   "license": "MIT",
   "publisher": "NeuSandeZ",
