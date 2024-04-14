@@ -3,10 +3,10 @@
 Extracting inline styles to a new or existing file. Adds automatically import to a file a the top.
 
 - Extract to a new file.
-  ![](https://github.com/NeuSandeZ/InlineCssToFileExtension/blob/main/images/toNewFile.gif)
+  ![](https://github.com/NeuSandeZ/InlineCssToFileExtension/blob/main/images/toNewFile.gif?raw=true)
 
 - Extract to already existing file
-  ![](https://github.com/NeuSandeZ/InlineCssToFileExtension/blob/main/images/toExistingFile.gif)
+  ![](https://github.com/NeuSandeZ/InlineCssToFileExtension/blob/main/images/toExistingFile.gif?raw=true)
 
 ## Known Issues
 
