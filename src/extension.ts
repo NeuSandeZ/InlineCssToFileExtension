@@ -75,10 +75,15 @@ async function moveToExistingFile(
     return;
   }
 
-  const cssFileNames = cssFiles.map((file) => path.basename(file.path));
-  const chosenFile = await window.showQuickPick(cssFileNames);
+  const cssFileNames = cssFiles.map((file) => ({
+    label: path.basename(file.path),
+    path: file.fsPath,
+  }));
+  const chosenFileItem = await window.showQuickPick(cssFileNames, {
+    placeHolder: "Select a CSS file to move styles to",
+  });
 
-  if (!chosenFile) {
+  if (!chosenFileItem) {
     return;
   }
 
@@ -90,13 +95,20 @@ async function moveToExistingFile(
     return;
   }
 
-  await applyEditAndWriteCss(document, pair, chosenFile, className, linkIndex);
+  const { path: chosenFilePath } = chosenFileItem;
+  await applyEditAndWriteCss(
+    document,
+    pair,
+    chosenFilePath,
+    className,
+    linkIndex
+  );
 }
 
 async function applyEditAndWriteCss(
   document: TextDocument,
   pair: number[],
-  fileName: string,
+  filePath: string,
   className: string,
   linkIndex: number | null
 ) {
@@ -104,10 +116,6 @@ async function applyEditAndWriteCss(
   if (!editor) {
     return;
   }
-  const cssFilePath = path.join(
-    path.dirname(editor.document.uri.fsPath),
-    fileName
-  );
 
   await editor.edit((editBuilder) => {
     const documentText = document.getText();
@@ -135,27 +143,32 @@ async function applyEditAndWriteCss(
     }
     //TODO add detection of .css files linked to a componenet's html
     // and extract them automatically there after triggering command??
-    if (!fs.existsSync(cssFilePath)) {
+    if (!fs.existsSync(filePath)) {
+      const newCssFilePath = path.join(
+        path.dirname(editor.document.uri.fsPath),
+        filePath
+      );
       fs.writeFileSync(
-        cssFilePath,
+        newCssFilePath,
         `.${className} { ${extractedStyleContent} }`
       );
     } else {
       fs.appendFileSync(
-        cssFilePath,
+        filePath,
         `\n\n.${className} { ${extractedStyleContent} }`
       );
     }
     //TODO handle imports for angular and react?
-    if (linkIndex && documentText.includes(fileName)) {
+    const filePathBase = path.basename(filePath);
+    if (linkIndex && documentText.includes(filePathBase)) {
       return;
-    } else if (linkIndex && !documentText.includes(fileName)) {
+    } else if (linkIndex && !documentText.includes(filePathBase)) {
       let postionToInsertImport = document.positionAt(linkIndex! + 1);
       editBuilder.insert(
         postionToInsertImport,
-        `\n\t\t<link rel="stylesheet" href="${path.basename(cssFilePath)}">`
+        `\n\t\t<link rel="stylesheet" href="${filePathBase}">`
       );
-    } else if (!linkIndex && !documentText.includes(fileName)) {
+    } else if (!linkIndex && !documentText.includes(filePathBase)) {
       const titleIndex = documentText.indexOf("</title>");
       //TODO temporary fix so react and angular don't get imports
       if (titleIndex === -1) {
@@ -166,7 +179,7 @@ async function applyEditAndWriteCss(
       );
       editBuilder.insert(
         postionToInsertImport,
-        `\n\t\t<link rel="stylesheet" href="${path.basename(cssFilePath)}">`
+        `\n\t\t<link rel="stylesheet" href="${filePathBase}">`
       );
     }
   });
