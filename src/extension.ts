@@ -65,7 +65,7 @@ async function moveToExistingFile(
   pair: number[],
   linkIndex: number | null
 ) {
-  const cssFiles = await workspace.findFiles("**/*.css");
+  const cssFiles = await searchForCssFiles();
   if (cssFiles.length === 0) {
     await window.showErrorMessage("No .css file was found!");
     let choice = await window.showQuickPick(["Yes", "No"], {
@@ -118,9 +118,10 @@ async function applyEditAndWriteCss(
     if (pair[2]) {
       const minInx = Math.min(...pair);
       const maxInx = Math.max(...pair);
-      const extractedClassContent = document
-        .getText()
-        .substring(pair[2] + 7, pair[3] - 1);
+      const extractedClassContent = documentText.substring(
+        pair[2] + 7,
+        pair[3] - 1
+      );
 
       editBuilder.replace(
         new Range(document.positionAt(minInx), document.positionAt(maxInx)),
@@ -169,4 +170,18 @@ async function applyEditAndWriteCss(
       );
     }
   });
+}
+
+async function searchForCssFiles() {
+  const srcExists = path
+    .dirname(window.activeTextEditor!.document.uri.fsPath)
+    .includes("src");
+
+  let cssFiles;
+
+  if (srcExists) {
+    return (cssFiles = await workspace.findFiles("**/src/**/*.css"));
+  } else {
+    return (cssFiles = await workspace.findFiles("**/*.css"));
+  }
 }
