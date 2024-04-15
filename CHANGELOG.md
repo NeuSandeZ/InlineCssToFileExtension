@@ -8,6 +8,10 @@ All notable changes to the "inlinecsstofile" extension will be documented in thi
 
 - Imports are not added to HTML file when in React or Angular component.
 
+* Fixed problem with file being created even after choosing "Move to file" option
+
+* Fixed indexer, it wasn't working properly when nesting occured.
+
 ### CHANGED
 
 - Searching for .css files now doesn't look outside "src" folder thus ignores node_modules's .css files.

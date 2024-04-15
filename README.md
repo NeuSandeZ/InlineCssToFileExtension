@@ -16,7 +16,7 @@ None ATM.
 
 ### 1.0.1
 
-- Import issue in React or Angular fixed. Searching for .css files changed.
+- Import issue in React or Angular fixed. Searching for .css files changed. Rewrote indexer. Creation/insertion of/to file fixed.
 
 ### 1.0.0
 
