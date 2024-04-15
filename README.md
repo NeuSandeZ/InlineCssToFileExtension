@@ -14,8 +14,12 @@ None ATM.
 
 ## Release Notes
 
+### 1.0.1
+
+- Import issue in React or Angular fixed. Searching for .css files changed.
+
 ### 1.0.0
 
-Initial release.
+- Initial release.
 
 **Enjoy!**

@@ -2,8 +2,16 @@
 
 All notable changes to the "inlinecsstofile" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [1.0.1] - 15.04.2024
 
-## [Unreleased]
+### FIXED
 
-- Initial release
+- Imports are not added to HTML file when in React or Angular component.
+
+### CHANGED
+
+- Searching for .css files now doesn't look outside "src" folder thus ignores node_modules's .css files.
+
+## RELEASED
+
+- Initial release 1.0.0
