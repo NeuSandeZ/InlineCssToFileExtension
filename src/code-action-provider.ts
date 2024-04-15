@@ -6,7 +6,7 @@ import {
   window,
   CodeActionKind,
 } from "vscode";
-import { ParseResult, ParseText } from "./parser";
+import { IndexesResult, GetIndexes } from "./indexer";
 
 export class ContextualActionProvider implements CodeActionProvider {
   public async provideCodeActions(
@@ -19,7 +19,7 @@ export class ContextualActionProvider implements CodeActionProvider {
     }
 
     //TODO should i parse it always or only when the change is applied? TO CONSIDER
-    const parseResult: ParseResult = await ParseText(document.getText());
+    const parseResult: IndexesResult = await GetIndexes(document.getText());
 
     if (!parseResult) {
       return;
@@ -36,11 +36,11 @@ export class ContextualActionProvider implements CodeActionProvider {
 }
 
 async function GetCommands(
-  parseResult: ParseResult,
+  indexesResult: IndexesResult,
   cursorOffset: number,
   document: TextDocument
 ) {
-  for (let pair of parseResult.indexes) {
+  for (let pair of indexesResult.indexesForCommands) {
     const startOffset = pair[0];
     const endOffset = pair[1];
 
@@ -52,7 +52,7 @@ async function GetCommands(
       newFile.command = {
         title: "Move to new file",
         command: "extension.extractInlineCssToNewFile",
-        arguments: [document, pair, parseResult.lastLinkIndex],
+        arguments: [document, pair, indexesResult.lastLinkIndex],
       };
 
       const toExistingFile = new CodeAction(
@@ -63,7 +63,7 @@ async function GetCommands(
       toExistingFile.command = {
         title: "Move to file",
         command: "extension.extractInlineCssToFile",
-        arguments: [document, pair, parseResult.lastLinkIndex],
+        arguments: [document, pair, indexesResult.lastLinkIndex],
       };
       return [toExistingFile, newFile];
     }
