@@ -25,7 +25,6 @@ export async function GetIndexes(document: string): Promise<IndexesResult> {
       }
     },
     onattribute(name, value) {
-      console.log("in attribute", name);
       if (name === "style" && value.trim() !== "") {
         indexesOfStyle.push(parser.startIndex, parser.endIndex);
       } else if (name === "class") {
