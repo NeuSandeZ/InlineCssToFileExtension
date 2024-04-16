@@ -36,7 +36,8 @@ export function deactivate() {}
 async function moveToNewFile(
   document: TextDocument,
   pair: number[],
-  linkIndex: number | null
+  linkIndex: number | null,
+  fileExtension?: string
 ) {
   let fileName = await window.showInputBox({
     prompt: "Enter file name",
@@ -56,7 +57,10 @@ async function moveToNewFile(
     return;
   }
 
-  fileName += ".css";
+  if (fileExtension) {
+    fileName += fileExtension;
+  }
+
   await applyEditAndWriteCss(document, pair, fileName, className, linkIndex);
 }
 
@@ -65,14 +69,32 @@ async function moveToExistingFile(
   pair: number[],
   linkIndex: number | null
 ) {
+  //TODO if someone has save on focus changed and format on save set
+  // then indexes get messed up, maybe i should disable format on save during
+  // command execution (that's first fix i come up with)
   const cssFiles = await searchForCssFiles();
   if (cssFiles.length === 0) {
-    await window.showErrorMessage("No .css file was found!");
-    let choice = await window.showQuickPick(["Yes", "No"], {
-      placeHolder: "Want to create a CSS file?",
+    window.showErrorMessage("No .css file was found!");
+    const choice = await window.showQuickPick(["Yes", "No"], {
+      placeHolder: "Want to create a css/scss file?",
     });
-    choice === "Yes" ? moveToNewFile(document, pair, linkIndex) : null;
-    return;
+    if (choice === "Yes") {
+      const fileExtension = await window.showQuickPick([".SCSS", ".CSS"], {
+        placeHolder: "Choose file extension for your project!",
+      });
+      if (!fileExtension) {
+        return;
+      }
+      await moveToNewFile(
+        document,
+        pair,
+        linkIndex,
+        fileExtension!.toLowerCase()
+      );
+      return;
+    } else {
+      return;
+    }
   }
 
   const cssFileNames = cssFiles.map((file) => ({
@@ -115,6 +137,13 @@ async function applyEditAndWriteCss(
   let editor = window.activeTextEditor;
   if (!editor) {
     return;
+  }
+
+  const fileExtension = path.extname(filePath);
+  if (fileExtension !== ".css" && fileExtension !== ".scss") {
+    const files = await searchForCssFiles();
+    const firstCssFileExtension = path.extname(files[0].fsPath);
+    filePath += firstCssFileExtension;
   }
 
   await editor.edit((editBuilder) => {
@@ -193,8 +222,8 @@ async function searchForCssFiles() {
   let cssFiles;
 
   if (srcExists) {
-    return (cssFiles = await workspace.findFiles("**/src/**/*.css"));
+    return (cssFiles = await workspace.findFiles("**/src/**/*.{css, scss}"));
   } else {
-    return (cssFiles = await workspace.findFiles("**/*.css"));
+    return (cssFiles = await workspace.findFiles("**/*.{css,scss}"));
   }
 }
